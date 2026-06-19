@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Boba Learn">
+<meta name="theme-color" content="#fdf6ec">
+<meta name="description" content="Learn your bubble tea colours and tags">
+<link rel="manifest" href="manifest.json">
+<title>Boba Learn</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+:root {
+  --cream: #fdf6ec;
+  --warm: #fff9f2;
+  --sand: #f0dfc0;
+  --brown: #8b5e3c;
+  --dark: #2d1f14;
+  --accent: #e8875a;
+  --radius: 22px;
+}
+
+html, body {
+  height: 100%;
+  font-family: 'Nunito', sans-serif;
+  background: var(--cream);
+  color: var(--dark);
+  overflow: hidden;
+}
+
+/* ── LAYOUT ── */
+#app {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  max-width: 480px;
+  margin: 0 auto;
+  position: relative;
+}
+
+/* ── HEADER ── */
+.header {
+  padding: 52px 20px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+}
+.logo { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; color: var(--dark); }
+.logo em { color: var(--accent); font-style: normal; }
+.progress-wrap { display: flex; align-items: center; gap: 8px; }
+.progress-bar { width: 72px; height: 5px; background: var(--sand); border-radius: 99px; overflow: hidden; }
+.progress-fill { height: 100%; background: var(--accent); border-radius: 99px; transition: width .4s ease; }
+.progress-label { font-size: 12px; font-weight: 700; color: var(--brown); }
+
+/* ── TABS ── */
+.tabs {
+  display: flex;
+  gap: 8px;
+  padding: 14px 20px 10px;
+  flex-shrink: 0;
+}
+.tab {
+  flex: 1;
+  padding: 10px 0;
+  border: none;
+  border-radius: 14px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all .2s;
+  background: var(--sand);
+  color: var(--brown);
+}
+.tab.active { background: var(--dark); color: #fff; }
+
+/* ── SCROLL AREA ── */
+.screen {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 10px 20px 24px;
+  display: none;
+}
+.screen.active { display: block; }
+
+/* ── FLASHCARD ── */
+.scene {
+  width: 100%;
+  height: 360px;
+  perspective: 1200px;
+  cursor: pointer;
+  margin-bottom: 16px;
+}
+.card {
+  width: 100%; height: 100%;
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform .5s cubic-bezier(.4,0,.2,1);
+  border-radius: var(--radius);
+}
+.card.flipped { transform: rotateY(180deg); }
+.face {
+  position: absolute; inset: 0;
+  border-radius: var(--radius);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 28px;
+  box-shadow: 0 6px 30px rgba(0,0,0,.09);
+}
+.face-front { background: var(--warm); }
+.face-back { transform: rotateY(180deg); }
+
+.swatch {
+  width: 110px; height: 110px; border-radius: 50%;
+  margin-bottom: 20px;
+  box-shadow: 0 6px 20px rgba(0,0,0,.15);
+  flex-shrink: 0;
+}
+.tea-name { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; text-align: center; margin-bottom: 4px; }
+.tea-cat { font-size: 11px; font-weight: 700; color: var(--brown); opacity: .65; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 14px; }
+.hint { font-size: 12px; color: var(--brown); opacity: .45; font-weight: 600; margin-top: 8px; }
+
+.colour-name { font-family: 'Syne', sans-serif; font-size: 32px; font-weight: 800; text-align: center; margin-bottom: 14px; }
+.tags { display: flex; flex-wrap: wrap; gap: 7px; justify-content: center; margin-bottom: 14px; }
+.tag {
+  padding: 5px 13px; border-radius: 99px;
+  background: rgba(0,0,0,.07);
+  font-size: 12px; font-weight: 700; color: var(--dark);
+}
+.desc { font-size: 13px; color: var(--dark); opacity: .6; text-align: center; line-height: 1.6; }
+
+.nav { display: flex; gap: 12px; margin-bottom: 10px; }
+.btn {
+  flex: 1; padding: 15px; border: none; border-radius: 16px;
+  font-family: 'Nunito', sans-serif; font-size: 15px; font-weight: 800;
+  cursor: pointer; transition: transform .12s;
+  box-shadow: 0 3px 12px rgba(0,0,0,.09);
+}
+.btn:active { transform: scale(.96); }
+.btn-prev { background: var(--sand); color: var(--brown); }
+.btn-next { background: var(--dark); color: #fff; }
+.counter { text-align: center; font-size: 12px; color: var(--brown); font-weight: 700; opacity: .55; margin-bottom: 10px; }
+.shuffle-btn {
+  display: block; margin: 0 auto;
+  background: none; border: 2px solid var(--sand);
+  border-radius: 12px; padding: 8px 18px;
+  font-family: 'Nunito', sans-serif; font-size: 13px; font-weight: 700;
+  color: var(--brown); cursor: pointer;
+}
+
+/* ── QUIZ ── */
+.score-bar {
+  background: var(--warm); border-radius: 16px; padding: 12px 18px;
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 14px;
+  box-shadow: 0 2px 10px rgba(0,0,0,.06);
+}
+.score-bar span { font-size: 13px; font-weight: 700; color: var(--brown); }
+.score-val { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; color: var(--dark); }
+
+.q-card {
+  background: var(--warm); border-radius: var(--radius);
+  padding: 24px; display: flex; flex-direction: column; align-items: center;
+  margin-bottom: 14px;
+  box-shadow: 0 4px 20px rgba(0,0,0,.07);
+}
+.q-swatch { width: 84px; height: 84px; border-radius: 50%; margin-bottom: 16px; box-shadow: 0 4px 16px rgba(0,0,0,.14); }
+.q-text { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 800; text-align: center; line-height: 1.3; }
+
+.options { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+.opt {
+  padding: 16px 10px; border-radius: 15px;
+  border: 2.5px solid transparent;
+  background: var(--warm);
+  font-family: 'Nunito', sans-serif; font-size: 13px; font-weight: 700;
+  color: var(--dark); cursor: pointer; text-align: center;
+  box-shadow: 0 2px 10px rgba(0,0,0,.06);
+  transition: all .15s;
+}
+.opt:active { transform: scale(.97); }
+.opt.correct { background: #d4f5e2; border-color: #3bb273; color: #1a6641; }
+.opt.wrong   { background: #fde8e8; border-color: #e05c5c; color: #8b1a1a; }
+.opt.reveal  { background: #d4f5e2; border-color: #3bb273; color: #1a6641; }
+
+.feedback { text-align: center; font-size: 15px; font-weight: 700; min-height: 22px; margin-bottom: 10px; }
+.feedback.ok  { color: #3bb273; }
+.feedback.bad { color: #e05c5c; }
+
+.next-btn {
+  width: 100%; padding: 15px; border: none; border-radius: 16px;
+  background: var(--dark); color: #fff;
+  font-family: 'Nunito', sans-serif; font-size: 15px; font-weight: 800;
+  cursor: pointer; display: none;
+  box-shadow: 0 3px 12px rgba(0,0,0,.1);
+}
+
+/* Results */
+.results {
+  display: flex; flex-direction: column; align-items: center;
+  padding: 30px 0;
+}
+.results-emoji { font-size: 56px; margin-bottom: 14px; }
+.results-title { font-family: 'Syne', sans-serif; font-size: 26px; font-weight: 800; margin-bottom: 6px; }
+.results-sub { font-size: 14px; color: var(--brown); font-weight: 700; margin-bottom: 24px; }
+.results-score { font-family: 'Syne', sans-serif; font-size: 52px; font-weight: 800; color: var(--dark); }
+.results-btn {
+  width: 100%; padding: 16px; border: none; border-radius: 16px;
+  background: var(--dark); color: #fff;
+  font-family: 'Nunito', sans-serif; font-size: 16px; font-weight: 800;
+  cursor: pointer; margin-top: 10px;
+}
+
+/* ── GRID ── */
+.filter-scroll {
+  display: flex; gap: 8px; overflow-x: auto; padding-bottom: 12px;
+  scrollbar-width: none; margin-bottom: 4px;
+}
+.filter-scroll::-webkit-scrollbar { display: none; }
+.filter-btn {
+  flex-shrink: 0; padding: 7px 14px; border-radius: 99px; border: none;
+  background: var(--sand); color: var(--brown);
+  font-family: 'Nunito', sans-serif; font-size: 12px; font-weight: 700;
+  cursor: pointer; white-space: nowrap;
+}
+.filter-btn.active { background: var(--dark); color: #fff; }
+
+.grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+  padding-top: 8px;
+}
+.grid-card {
+  background: var(--warm); border-radius: 18px;
+  padding: 16px 12px 14px; display: flex; flex-direction: column; align-items: center;
+  box-shadow: 0 3px 12px rgba(0,0,0,.07);
+  cursor: pointer; transition: transform .15s;
+}
+.grid-card:active { transform: scale(.97); }
+.grid-swatch { width: 54px; height: 54px; border-radius: 50%; margin-bottom: 10px; box-shadow: 0 3px 10px rgba(0,0,0,.13); }
+.grid-name { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 800; text-align: center; margin-bottom: 2px; }
+.grid-colour { font-size: 11px; font-weight: 700; color: var(--brown); margin-bottom: 7px; }
+.grid-tags { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; }
+.grid-tag { font-size: 10px; font-weight: 700; background: var(--sand); color: var(--brown); padding: 3px 7px; border-radius: 99px; }
+
+/* ── MODAL ── */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,.5);
+  z-index: 100; display: none; align-items: flex-end; justify-content: center;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: var(--cream); border-radius: 28px 28px 0 0;
+  padding: 32px 28px 48px; width: 100%; max-width: 480px;
+  display: flex; flex-direction: column; align-items: center;
+  animation: slideUp .3s ease;
+}
+@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+.modal-close {
+  position: absolute; top: 16px; right: 20px;
+  width: 34px; height: 34px; border-radius: 50%;
+  background: var(--sand); border: none; cursor: pointer;
+  font-size: 14px; font-weight: 700; color: var(--brown);
+  display: flex; align-items: center; justify-content: center;
+}
+.modal-swatch { width: 90px; height: 90px; border-radius: 50%; margin-bottom: 16px; box-shadow: 0 5px 20px rgba(0,0,0,.15); }
+.modal-name { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; margin-bottom: 4px; }
+.modal-colour { font-size: 17px; font-weight: 800; margin-bottom: 10px; }
+.modal-badge { border-radius: 99px; padding: 5px 14px; margin-bottom: 14px; }
+.modal-badge span { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+.modal-tags { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-bottom: 16px; }
+.modal-tag { background: rgba(0,0,0,.07); border-radius: 99px; padding: 6px 14px; font-size: 13px; font-weight: 700; }
+.modal-desc { font-size: 14px; color: var(--dark); opacity: .65; text-align: center; line-height: 1.7; }
+
+/* ── BOTTOM NAV ── */
+.bottom-nav {
+  display: flex;
+  background: var(--warm);
+  border-top: 1.5px solid var(--sand);
+  padding-bottom: env(safe-area-inset-bottom);
+  flex-shrink: 0;
+}
+.nav-item {
+  flex: 1; display: flex; flex-direction: column; align-items: center;
+  padding: 10px 0 8px; border: none; background: none; cursor: pointer;
+  font-family: 'Nunito', sans-serif; font-size: 10px; font-weight: 700;
+  color: var(--brown); opacity: .45; transition: opacity .2s;
+  gap: 3px;
+}
+.nav-item.active { opacity: 1; color: var(--dark); }
+.nav-icon { font-size: 22px; line-height: 1; }
+
+/* Ambient bubbles */
+.bg { position: fixed; inset: 0; pointer-events: none; z-index: -1; overflow: hidden; }
+.bubble { position: absolute; bottom: -60px; border-radius: 50%; opacity: .12; animation: rise linear infinite; }
+@keyframes rise { to { transform: translateY(-110vh); opacity: 0; } }
+</style>
+</head>
+<body>
+
+<div class="bg" id="bg"></div>
+
+<div id="app">
+  <div class="header">
+    <div class="logo">boba<em>.</em>learn</div>
+    <div class="progress-wrap">
+      <div class="progress-bar"><div class="progress-fill" id="pFill" style="width:0%"></div></div>
+      <span class="progress-label" id="pLabel">0%</span>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('flash')">Flashcards</button>
+    <button class="tab" onclick="switchTab('quiz')">Quiz</button>
+    <button class="tab" onclick="switchTab('grid')">All Teas</button>
+  </div>
+
+  <!-- FLASHCARD SCREEN -->
+  <div class="screen active" id="screen-flash">
+    <div class="scene" id="scene" onclick="flipCard()">
+      <div class="card" id="card">
+        <div class="face face-front" id="front"></div>
+        <div class="face face-back" id="back"></div>
+      </div>
+    </div>
+    <div class="nav">
+      <button class="btn btn-prev" onclick="prevCard()">← Prev</button>
+      <button class="btn btn-next" onclick="nextCard()">Next →</button>
+    </div>
+    <div class="counter" id="counter"></div>
+    <button class="shuffle-btn" onclick="reshuffleFlash()">🔀 Shuffle deck</button>
+  </div>
+
+  <!-- QUIZ SCREEN -->
+  <div class="screen" id="screen-quiz"></div>
+
+  <!-- GRID SCREEN -->
+  <div class="screen" id="screen-grid"></div>
+
+  <!-- BOTTOM NAV -->
+  <nav class="bottom-nav">
+    <button class="nav-item active" onclick="switchTab('flash')" id="nav-flash">
+      <span class="nav-icon">🃏</span>Flashcards
+    </button>
+    <button class="nav-item" onclick="switchTab('quiz')" id="nav-quiz">
+      <span class="nav-icon">🧠</span>Quiz
+    </button>
+    <button class="nav-item" onclick="switchTab('grid')" id="nav-grid">
+      <span class="nav-icon">🧋</span>All Teas
+    </button>
+  </nav>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal" onclick="closeModal(event)">
+  <div class="modal" id="modalCard" style="position:relative">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div id="modalContent"></div>
+  </div>
+</div>
+
+<script>
+const TEAS = [
+  { name:"Alishan",       colour:"#7ab648", colourName:"Green",         category:"Oolong",    tags:["Fruity","Floral","Light"],         desc:"A high-mountain Taiwanese oolong with a sweet, creamy finish and floral notes." },
+  { name:"Chai",          colour:"#4a90d9", colourName:"Blue",           category:"Spiced",    tags:["Spiced","Warming","Bold"],          desc:"A classic spiced milk tea with cinnamon, cardamom, and ginger warmth." },
+  { name:"Taro",          colour:"#9b7fc7", colourName:"Purple",         category:"Classic",   tags:["Sweet","Creamy","Starchy"],         desc:"Made from taro root — sweet, nutty, and unmistakably purple." },
+  { name:"Matcha",        colour:"#4e9a4e", colourName:"Dark Green",     category:"Green Tea", tags:["Earthy","Umami","Rich"],            desc:"Whisked ceremonial green tea powder. Smooth, slightly bitter, vibrant." },
+  { name:"Thai Tea",      colour:"#e8821a", colourName:"Orange",         category:"Spiced",    tags:["Sweet","Spiced","Bold"],            desc:"Strong Ceylon tea with star anise, tamarind, and sweetened condensed milk." },
+  { name:"Lychee",        colour:"#f7b0c4", colourName:"Pink",           category:"Fruit",     tags:["Sweet","Floral","Light"],           desc:"Delicate and perfumed with real lychee fruit — tropical and refreshing." },
+  { name:"Brown Sugar",   colour:"#8b5e2a", colourName:"Brown",          category:"Classic",   tags:["Caramel","Rich","Warming"],         desc:"Tiger-stripe brown sugar milk tea — sweet, caramel-rich, and indulgent." },
+  { name:"Jasmine",       colour:"#f9e87a", colourName:"Yellow",         category:"Green Tea", tags:["Floral","Delicate","Fresh"],        desc:"Green tea scented with fresh jasmine blossoms — light, aromatic, elegant." },
+  { name:"Hojicha",       colour:"#c47a3a", colourName:"Amber",          category:"Roasted",   tags:["Toasty","Low-Caffeine","Cosy"],    desc:"Roasted green tea with a warm, nutty, slightly caramel flavour." },
+  { name:"Strawberry",    colour:"#f25978", colourName:"Red-Pink",       category:"Fruit",     tags:["Sweet","Bright","Refreshing"],      desc:"Bursting with real strawberry flavour — fruity, fresh, and vibrant." },
+  { name:"Mango",         colour:"#ffb830", colourName:"Golden Yellow",  category:"Fruit",     tags:["Tropical","Sweet","Juicy"],         desc:"Ripe mango blended into a creamy or fruity base — summer in a cup." },
+  { name:"Earl Grey",     colour:"#9aadc7", colourName:"Slate Blue",     category:"Black Tea", tags:["Bergamot","Floral","Citrus"],       desc:"Black tea with bergamot oil — distinctive citrus-floral character." },
+  { name:"Wintermelon",   colour:"#b0c8ae", colourName:"Sage Green",     category:"Classic",   tags:["Mild","Sweet","Subtle"],            desc:"A mellow Taiwanese classic — light, subtly sweet, and very drinkable." },
+  { name:"Passion Fruit", colour:"#ffcc00", colourName:"Bright Yellow",  category:"Fruit",     tags:["Tangy","Tropical","Vibrant"],       desc:"Punchy passion fruit — tart, tropical, and visually striking." },
+  { name:"Rose",          colour:"#e8a0b4", colourName:"Blush Pink",     category:"Floral",    tags:["Floral","Romantic","Delicate"],     desc:"Delicate rose petal infusion — lightly sweet, softly floral, elegant." },
+  { name:"Oolong",        colour:"#c9a84c", colourName:"Honey Gold",     category:"Oolong",    tags:["Fruity","Complex","Smooth"],        desc:"Semi-oxidised tea between green and black — fruity, silky, layered." },
+  { name:"Black Milk Tea",colour:"#3d2b1f", colourName:"Dark Brown",     category:"Black Tea", tags:["Bold","Classic","Robust"],          desc:"The original bubble tea — strong Assam or Ceylon with rich creamy milk." },
+  { name:"Coconut",       colour:"#d4ede5", colourName:"Pale Mint",      category:"Classic",   tags:["Creamy","Tropical","Mild"],         desc:"Soft coconut milk base — tropical, lightly sweet, silky smooth." },
+];
+
+function shuffle(a) {
+  const b = [...a];
+  for (let i = b.length-1; i>0; i--) { const j = Math.floor(Math.random()*(i+1)); [b[i],b[j]]=[b[j],b[i]]; }
+  return b;
+}
+
+function lightColour(hex) {
+  // check if colour is too light for dark text on back card
+  const r=parseInt(hex.slice(1,3),16), g=parseInt(hex.slice(3,5),16), b=parseInt(hex.slice(5,7),16);
+  return (r*299+g*587+b*114)/1000 > 160;
+}
+
+// ── Progress ──
+function setProgress(v) {
+  const pct = Math.round(v*100);
+  document.getElementById('pFill').style.width = pct+'%';
+  document.getElementById('pLabel').textContent = pct+'%';
+}
+
+// ── Tab switching ──
+let currentTab = 'flash';
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab').forEach((el,i)=> el.classList.toggle('active', ['flash','quiz','grid'][i]===tab));
+  document.querySelectorAll('.screen').forEach(el=> el.classList.remove('active'));
+  document.getElementById('screen-'+tab).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach((el,i)=> el.classList.toggle('active', ['flash','quiz','grid'][i]===tab));
+  if (tab==='quiz') initQuiz();
+  if (tab==='grid') renderGrid();
+}
+
+// ════════════════════════════
+// FLASHCARD
+// ════════════════════════════
+let deck = shuffle(TEAS);
+let cardIdx = 0;
+let flipped = false;
+
+function renderCard() {
+  const t = deck[cardIdx];
+  setProgress((cardIdx+1)/deck.length);
+  document.getElementById('counter').textContent = `${cardIdx+1} / ${deck.length}`;
+  document.getElementById('card').classList.toggle('flipped', flipped);
+
+  const textCol = lightColour(t.colour) ? '#2d1f14' : t.colour;
+
+  document.getElementById('front').innerHTML = `
+    <div class="swatch" style="background:${t.colour}"></div>
+    <div class="tea-name">${t.name}</div>
+    <div class="tea-cat">${t.category}</div>
+    <div class="hint">Tap to reveal colour & tags</div>
+  `;
+  document.getElementById('back').innerHTML = `
+    <div class="colour-name" style="color:${textCol}">${t.colourName}</div>
+    <div class="tags">${t.tags.map(tag=>`<span class="tag">${tag}</span>`).join('')}</div>
+    <div class="desc">${t.desc}</div>
+    <div class="hint">Tap to flip back</div>
+  `;
+  document.getElementById('back').style.background = t.colour+'18';
+}
+
+function flipCard() { flipped=!flipped; renderCard(); }
+function nextCard() { cardIdx=(cardIdx+1)%deck.length; flipped=false; renderCard(); }
+function prevCard() { cardIdx=(cardIdx-1+deck.length)%deck.length; flipped=false; renderCard(); }
+function reshuffleFlash() { deck=shuffle(TEAS); cardIdx=0; flipped=false; renderCard(); }
+
+// ════════════════════════════
+// QUIZ
+// ════════════════════════════
+let qDeck=[], qIdx=0, qScore=0, qTotal=0, qAnswered=false, qOpts=[];
+
+function initQuiz() {
+  qDeck=shuffle(TEAS); qIdx=0; qScore=0; qTotal=0; qAnswered=false;
+  renderQuiz();
+}
+
+function buildOpts(tea) {
+  const others = shuffle(TEAS.filter(t=>t.name!==tea.name)).slice(0,3);
+  return shuffle([tea,...others]);
+}
+
+function renderQuiz() {
+  const el = document.getElementById('screen-quiz');
+
+  if (qIdx >= qDeck.length) {
+    const pct = Math.round(qScore/qTotal*100);
+    const emoji = pct===100?'🌟':pct>=70?'🎉':'💪';
+    const msg = pct===100?'Perfect score!':pct>=70?'Great work!':'Keep practising!';
+    setProgress(1);
+    el.innerHTML = `
+      <div class="results">
+        <div class="results-emoji">${emoji}</div>
+        <div class="results-title">Quiz complete!</div>
+        <div class="results-score">${qScore}/${qTotal}</div>
+        <div class="results-sub">${msg}</div>
+        <button class="results-btn" onclick="initQuiz()">Try Again</button>
+      </div>`;
+    return;
+  }
+
+  const tea = qDeck[qIdx];
+  qOpts = buildOpts(tea);
+  setProgress(qIdx/qDeck.length);
+  const qType = qIdx%2===0 ? 'colour' : 'name';
+  const textCol = lightColour(tea.colour) ? '#8b5e3c' : tea.colour;
+
+  el.innerHTML = `
+    <div class="score-bar">
+      <span>Score</span>
+      <span class="score-val">${qScore}/${qTotal}</span>
+      <span>Q${qIdx+1}/${qDeck.length}</span>
+    </div>
+    <div class="q-card">
+      <div class="q-swatch" style="background:${tea.colour}"></div>
+      <div class="q-text">${
+        qType==='colour'
+          ? `What colour is <b>${tea.name}</b>?`
+          : `Which tea is <b style="color:${textCol}">${tea.colourName}</b>?`
+      }</div>
+    </div>
+    <div class="options" id="opts">
+      ${qOpts.map((opt,i)=>`
+        <button class="opt" id="opt${i}" onclick="answer(${i})">
+          ${qType==='colour' ? opt.colourName : opt.name}
+        </button>`).join('')}
+    </div>
+    <div class="feedback" id="qfb"></div>
+    <button class="next-btn" id="qnext" onclick="nextQ()">
+      ${qIdx+1>=qDeck.length ? 'See results' : 'Next question →'}
+    </button>
+  `;
+}
+
+function answer(chosen) {
+  if (qAnswered) return;
+  qAnswered=true; qTotal++;
+  const tea = qDeck[qIdx];
+  const correct = qOpts[chosen].name===tea.name;
+  if (correct) qScore++;
+
+  qOpts.forEach((opt,i)=>{
+    const el = document.getElementById('opt'+i);
+    el.style.pointerEvents='none';
+    if (opt.name===tea.name) el.classList.add('reveal');
+    else if (i===chosen) el.classList.add('wrong');
+  });
+
+  const fb = document.getElementById('qfb');
+  fb.textContent = correct ? '✓ Correct!' : `✗ It was ${tea.name} — ${tea.colourName}`;
+  fb.className = 'feedback '+(correct?'ok':'bad');
+  document.getElementById('qnext').style.display='block';
+}
+
+function nextQ() {
+  qIdx++; qAnswered=false;
+  renderQuiz();
+}
+
+// ════════════════════════════
+// GRID
+// ════════════════════════════
+let gridFilter = 'All';
+const categories = ['All', ...Array.from(new Set(TEAS.map(t=>t.category)))];
+
+function renderGrid() {
+  setProgress(1);
+  const filtered = gridFilter==='All' ? TEAS : TEAS.filter(t=>t.category===gridFilter);
+  document.getElementById('screen-grid').innerHTML = `
+    <div class="filter-scroll">
+      ${categories.map(c=>`
+        <button class="filter-btn${c===gridFilter?' active':''}" onclick="setFilter('${c}')">${c}</button>
+      `).join('')}
+    </div>
+    <div class="grid">
+      ${filtered.map(t=>`
+        <div class="grid-card" onclick="openModal('${t.name}')">
+          <div class="grid-swatch" style="background:${t.colour}"></div>
+          <div class="grid-name">${t.name}</div>
+          <div class="grid-colour">${t.colourName}</div>
+          <div class="grid-tags">${t.tags.slice(0,2).map(tag=>`<span class="grid-tag">${tag}</span>`).join('')}</div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+function setFilter(f) { gridFilter=f; renderGrid(); }
+
+// ── Modal ──
+function openModal(name) {
+  const t = TEAS.find(x=>x.name===name);
+  const textCol = lightColour(t.colour) ? '#8b5e3c' : t.colour;
+  document.getElementById('modalContent').innerHTML = `
+    <div class="modal-swatch" style="background:${t.colour}"></div>
+    <div class="modal-name">${t.name}</div>
+    <div class="modal-colour" style="color:${textCol}">${t.colourName}</div>
+    <div class="modal-badge" style="background:${t.colour}22">
+      <span style="color:${textCol}">${t.category}</span>
+    </div>
+    <div class="modal-tags">${t.tags.map(tag=>`<span class="modal-tag">${tag}</span>`).join('')}</div>
+    <div class="modal-desc">${t.desc}</div>
+  `;
+  document.getElementById('modal').classList.add('open');
+}
+function closeModal(e) {
+  if (!e || e.target===document.getElementById('modal')) {
+    document.getElementById('modal').classList.remove('open');
+  }
+}
+
+// ── Background bubbles ──
+(function(){
+  const wrap=document.getElementById('bg');
+  const cols=['#f7c59f','#e8c5f5','#b8e0f7','#c8f0d0','#fde8c8'];
+  for(let i=0;i<12;i++){
+    const b=document.createElement('div');
+    b.className='bubble';
+    const sz=18+Math.random()*55;
+    b.style.cssText=`width:${sz}px;height:${sz}px;left:${Math.random()*100}%;background:${cols[~~(Math.random()*cols.length)]};animation-duration:${9+Math.random()*18}s;animation-delay:${Math.random()*12}s`;
+    wrap.appendChild(b);
+  }
+})();
+
+// ── Init ──
+renderCard();
+
+// ── Service Worker ──
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  });
+}
+</script>
+</body>
+</html>
