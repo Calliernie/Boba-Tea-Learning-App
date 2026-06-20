@@ -1,4 +1,4 @@
-const CACHE = 'boba-learn-v1';
+const CACHE = 'boba-learn-v2';
 const ASSETS = ['/', '/index.html', '/manifest.json'];
 
 self.addEventListener('install', e => {
